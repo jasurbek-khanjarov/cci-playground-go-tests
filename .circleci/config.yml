@@ -1,0 +1,25 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/go:1.20.5
+    parallelism: 2
+    resource_class: medium
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Run tests
+          command: |
+            go test -v $(go list ./... | circleci tests split --split-by=timings) ./... -json > report.json
+            gotestsum --jsonfile report.json --format=testname{{.Elapsed}} --testsuite
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+
+workflows:
+  test-wf:
+    jobs:
+      - test
